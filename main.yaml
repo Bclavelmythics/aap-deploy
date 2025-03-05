@@ -1,0 +1,43 @@
+---
+# Ansible Playbook to add a group and user
+# Filename: add_group_user.yml
+
+- name: Add group and user
+  hosts: all  # This will run on all hosts defined in your inventory
+  become: true  # This enables sudo privileges
+  
+  vars:
+    group_name: "newgroup"  # Name of the group to create
+    user_name: "newuser"    # Name of the user to create
+    user_password: "{{ user_password_encrypted }}"  # This should be an encrypted password
+    user_shell: "/bin/bash"
+    user_home: "/home/{{ user_name }}"
+    user_comment: "New User"
+    
+  tasks:
+    - name: Create the group
+      group:
+        name: "{{ group_name }}"
+        state: present
+      
+    - name: Create the user
+      user:
+        name: "{{ user_name }}"
+        comment: "{{ user_comment }}"
+        group: "{{ group_name }}"
+        home: "{{ user_home }}"
+        shell: "{{ user_shell }}"
+        password: "{{ user_password }}"
+        state: present
+        
+    - name: Set permissions on user home directory
+      file:
+        path: "{{ user_home }}"
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+        mode: '0750'
+        state: directory
+        
+    - name: Print confirmation message
+      debug:
+        msg: "Created group {{ group_name }} and user {{ user_name }}"
