@@ -18,10 +18,16 @@ steps:
 - script: printenv | sort
   displayName: "List All Environment Variables"
 - script: |     
-    echo "$(ANSIBLE_VAULT_PASSWORD)" > $(BUILD_REPOSITORY_LOCALPATH)/.ansible-vault-password     
-    chmod 600 ~/.ansible-vault-password
+    sudo echo "$(ANSIBLE_VAULT_PASSWORD)" > ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password  
+    sudo chmod 600 ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password
   displayName: 'Create Ansible Vault Password File'
   env:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
+    BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
+- script: |
+    ansible-playbook -i ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/inventory-growth ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/collections/ansible_collections/ansible/containerized_installer/playbooks/install.yml -e "@${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/foo.yml" --vault-password-file ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password
+  env:
+    BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
+
  
 
