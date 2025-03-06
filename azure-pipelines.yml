@@ -11,4 +11,6 @@ pool:
 
 steps:
 - checkout: self
+- script: printenv | sort
+  displayName: "List All Environment Variables"
 
