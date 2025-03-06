@@ -14,6 +14,15 @@ steps:
     sudo dnf install git -y
     sudo dnf install ansible-core -y
   displayName: 'Install packages needed for AAP installation'
+- task: DownloadSecureFile@1
+  displayName: 'Download secure file'
+  inputs:
+    secureFile: brodyclavell
+- script: |
+    chmod 400 $(pemKey.secureFilePath)
+  displayName: 'change permission of key'
+- script: |
+    echo $(pemKey.secureFilePath)
 - checkout: self
 - script: printenv | sort
   displayName: "List All Environment Variables"
@@ -24,9 +33,7 @@ steps:
   env:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
     BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
-- script: |
-    sudo echo "$(SSH_KEY)" > /home/bclavel/.ssh/ssh_key
-    sudo chmod 600 /home/bclavel/.ssh/ssh_key
+
 - script: |
     cd ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8
     ansible-playbook -i inventory-growth ansible.containerized_installer.install -e "@foo.yaml" --vault-password-file .ansible-vault-password
