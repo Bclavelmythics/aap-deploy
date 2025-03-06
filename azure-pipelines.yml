@@ -14,6 +14,16 @@ steps:
     sudo dnf install git -y
     sudo dnf install ansible-core -y
   displayName: 'Install packages needed for AAP installation'
+- task: DownloadSecureFile@1
+  displayName: 'Download secure file'
+  name: brodyclavell
+  inputs:
+    secureFile: brodyclavell
+- script: |
+    chmod 400 $(brodyclavell.secureFilePath)
+  displayName: 'change permission of key'
+- script: |
+    echo $(brodyclavell.secureFilePath)
 - checkout: self
 - script: printenv | sort
   displayName: "List All Environment Variables"
@@ -24,8 +34,10 @@ steps:
   env:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
     BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
+
 - script: |
-    ansible-playbook -i ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/inventory-growth ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/collections/ansible_collections/ansible/containerized_installer/playbooks/install.yml -e "@${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/foo.yml" --vault-password-file ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password
+    cd ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8
+    ansible-playbook -i inventory-growth ansible.containerized_installer.install -e "@foo.yaml" --vault-password-file .ansible-vault-password
   env:
     BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
 
