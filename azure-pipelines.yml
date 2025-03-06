@@ -16,10 +16,9 @@ steps:
   displayName: 'Install packages needed for AAP installation'
 - task: DownloadSecureFile@1
   displayName: 'Download secure file'
+  name: brodyclavell
   inputs:
     secureFile: brodyclavell
-  output:
-    secureFilePath: brodyclavell
 - script: |
     chmod 400 $(brodyclavell.secureFilePath)
   displayName: 'change permission of key'
