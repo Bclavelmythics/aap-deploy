@@ -19,10 +19,10 @@ steps:
   inputs:
     secureFile: brodyclavell
 - script: |
-    chmod 400 $(pemKey.secureFilePath)
+    chmod 400 $(brodyclavell.secureFilePath)
   displayName: 'change permission of key'
 - script: |
-    echo $(pemKey.secureFilePath)
+    echo $(brodyclavell.secureFilePath)
 - checkout: self
 - script: printenv | sort
   displayName: "List All Environment Variables"
