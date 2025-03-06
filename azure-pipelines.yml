@@ -10,13 +10,13 @@ pool:
   name: Demo
 
 steps:
-- checkout: self
-- script: printenv | sort
-  displayName: "List All Environment Variables"
 - script: |
     sudo dnf install git -y
     sudo dnf install ansible -y
   displayName: 'Install packages needed for AAP installation'
+- checkout: self
+- script: printenv | sort
+  displayName: "List All Environment Variables"
 - script: |     
     echo "$(ANSIBLE_VAULT_PASSWORD)" > ~/.ansible-vault-password     
     chmod 600 ~/.ansible-vault-password
