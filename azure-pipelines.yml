@@ -23,8 +23,11 @@ steps:
   displayName: 'Create Ansible Vault Password File'
   env:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
+    BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
 - script: |
     sudo cd "$(BUILD_REPOSITORY_LOCALPATH)/ansible-automation-platform-containerized-setup-2.5-8"
+  env:
+    BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
 
  
 
