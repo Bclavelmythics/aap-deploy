@@ -12,7 +12,7 @@ pool:
 steps:
 - script: |
     sudo dnf install git -y
-    sudo dnf install ansible -y
+    sudo dnf install ansible-core -y
   displayName: 'Install packages needed for AAP installation'
 - checkout: self
 - script: printenv | sort
