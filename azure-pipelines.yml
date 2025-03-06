@@ -18,10 +18,12 @@ steps:
 - script: printenv | sort
   displayName: "List All Environment Variables"
 - script: |     
-    echo "$(ANSIBLE_VAULT_PASSWORD)" > $(BUILD_REPOSITORY_LOCALPATH)/.ansible-vault-password     
-    chmod 600 ~/.ansible-vault-password
+    sudo echo "$(ANSIBLE_VAULT_PASSWORD)" > "$(BUILD_REPOSITORY_LOCALPATH)"/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password     
+    sudo chmod 600 "$(BUILD_REPOSITORY_LOCALPATH)"/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password
   displayName: 'Create Ansible Vault Password File'
   env:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
+- script: |
+    sudo cd "$(BUILD_REPOSITORY_LOCALPATH)"/ansible-automation-platform-containerized-setup-2.5-8
  
 
