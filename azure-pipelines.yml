@@ -28,7 +28,7 @@ steps:
     sudo echo "$(SSH_KEY)" > /home/bclavel/.ssh/ssh_key
     sudo chmod 600 /home/bclavel/.ssh/ssh_key
 - script: |
-    ansible-playbook -i ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/inventory-growth ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/collections/ansible_collections/ansible/containerized_installer/playbooks/install.yml -e "@${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/foo.yml" --vault-password-file ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password
+    ansible-playbook -i ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/inventory-growth ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/collections/ansible_collections/ansible/containerized_installer/playbooks/install.yml -e "@${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/foo.yaml" --vault-password-file ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8/.ansible-vault-password
   env:
     BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
 
