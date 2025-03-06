@@ -1,0 +1,16 @@
+DATABASES = {
+   'default': {
+       'ATOMIC_REQUESTS': True,
+       'ENGINE': 'awx.main.db.profiled_pg',
+       'NAME': '{{ controller_pg_database }}',
+       'USER': '{{ controller_pg_username }}',
+       'PASSWORD': """{{ controller_pg_password }}""",
+       'HOST': '{{ controller_pg_socket | default(controller_pg_host) }}',
+       'PORT': '{{ controller_pg_port }}',
+       'OPTIONS': {
+           'options': '-c datestyle=ISO,\ MDY',
+           'sslmode': '{{ controller_pg_sslmode }}',
+           'sslrootcert': '{{ ca_trust_bundle }}',
+       },
+   }
+}

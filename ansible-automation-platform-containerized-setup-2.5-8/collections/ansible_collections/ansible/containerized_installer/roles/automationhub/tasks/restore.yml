@@ -1,0 +1,69 @@
+---
+- name: Set automation hub facts
+  ansible.builtin.include_tasks: facts.yml
+
+- name: Stop automation hub systemd services
+  ansible.builtin.include_tasks: systemd.yml
+  vars:
+    __systemd_state: stopped
+
+- name: Invalid redis cache
+  ansible.builtin.include_role:
+    name: redis
+    tasks_from: flush.yml
+  vars:
+    __redis_databases:
+      - '{{ hub_redis_cache_db }}'
+
+- name: Unarchive the automation hub data
+  ansible.builtin.unarchive:
+    src: '{{ hostvars["localhost"]["_backup_dir"] }}/hub_{{ inventory_hostname }}.tar.gz'
+    dest: '{{ ansible_user_dir }}'
+
+- name: Reconfigure containers
+  ansible.builtin.include_tasks: containers.yml
+  vars:
+    __containers_recreate: true
+
+- name: Grant createdb role to the automation hub postgresql user
+  community.postgresql.postgresql_user:
+    name: '{{ hub_pg_username }}'
+    role_attr_flags: CREATEDB
+    login_host: '{{ hub_pg_host }}'
+    login_port: '{{ hub_pg_port }}'
+    login_user: '{{ postgresql_admin_username | default("postgres") }}'
+    login_password: '{{ postgresql_admin_password | default(omit) }}'
+    login_db: '{{ postgresql_admin_database | default("postgres") }}'
+    login_unix_socket: '{{ hub_pg_socket | default(omit) }}'
+  run_once: true
+
+- name: Restore the automation hub postgresql database
+  community.postgresql.postgresql_db:
+    name: template1
+    login_host: '{{ hub_pg_host }}'
+    login_port: '{{ hub_pg_port }}'
+    login_user: '{{ hub_pg_username }}'
+    login_password: '{{ hub_pg_password }}'
+    login_unix_socket: '{{ hub_pg_socket | default(omit) }}'
+    target: '{{ ansible_user_dir }}/aap/backups/{{ hub_pg_database }}.pgc'
+    target_opts: '--create --clean --if-exists'
+    state: restore
+  run_once: true
+
+- name: Revoke createdb role to the automation hub postgresql user
+  community.postgresql.postgresql_user:
+    name: '{{ hub_pg_username }}'
+    role_attr_flags: NOCREATEDB
+    login_host: '{{ hub_pg_host }}'
+    login_port: '{{ hub_pg_port }}'
+    login_user: '{{ postgresql_admin_username | default("postgres") }}'
+    login_password: '{{ postgresql_admin_password | default(omit) }}'
+    login_db: '{{ postgresql_admin_database | default("postgres") }}'
+    login_unix_socket: '{{ hub_pg_socket | default(omit) }}'
+  run_once: true
+
+- name: Start automation hub systemd services
+  ansible.builtin.include_tasks: systemd.yml
+  vars:
+    __systemd_state: started
+...

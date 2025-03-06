@@ -1,0 +1,31 @@
+---
+- name: Backup the automation gateway postgresql database
+  community.postgresql.postgresql_db:
+    name: '{{ gateway_pg_database }}'
+    login_host: '{{ gateway_pg_host }}'
+    login_port: '{{ gateway_pg_port }}'
+    login_user: '{{ gateway_pg_username }}'
+    login_password: '{{ gateway_pg_password }}'
+    login_unix_socket: '{{ gateway_pg_socket | default(omit) }}'
+    target: '{{ ansible_user_dir }}/aap/backups/{{ gateway_pg_database }}.pgc'
+    target_opts: '--clean --create'
+    state: dump
+  run_once: true
+
+- name: Archive the automation gateway data
+  ansible.containerized_installer.archive:
+    path:
+      - '{{ ansible_user_dir }}/.local/share/containers/storage/secrets'
+      - '{{ ansible_user_dir }}/aap/backups/{{ gateway_pg_database }}.pgc'
+      - '{{ ansible_user_dir }}/aap/gateway'
+      - '{{ ansible_user_dir }}/aap/gatewayproxy'
+      - '{{ ansible_user_dir }}/aap/tls'
+    dest: '{{ ansible_user_dir }}/aap/backups/gateway.tar.gz'
+    mode: '0640'
+
+- name: Download the automation gateway tarball
+  ansible.builtin.fetch:
+    src: '{{ ansible_user_dir }}/aap/backups/gateway.tar.gz'
+    dest: '{{ hostvars["localhost"]["_backup_dir"] }}/gateway_{{ inventory_hostname }}.tar.gz'
+    flat: true
+...

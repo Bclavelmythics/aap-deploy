@@ -1,0 +1,30 @@
+---
+- name: Backup the automation eda postgresql database
+  community.postgresql.postgresql_db:
+    name: '{{ eda_pg_database }}'
+    login_host: '{{ eda_pg_host }}'
+    login_port: '{{ eda_pg_port }}'
+    login_user: '{{ eda_pg_username }}'
+    login_password: '{{ eda_pg_password }}'
+    login_unix_socket: '{{ eda_pg_socket | default(omit) }}'
+    target: '{{ ansible_user_dir }}/aap/backups/{{ eda_pg_database }}.pgc'
+    target_opts: '--clean --create'
+    state: dump
+  run_once: true
+
+- name: Archive the automation eda data
+  ansible.containerized_installer.archive:
+    path:
+      - '{{ ansible_user_dir }}/.local/share/containers/storage/secrets'
+      - '{{ ansible_user_dir }}/aap/backups/{{ eda_pg_database }}.pgc'
+      - '{{ ansible_user_dir }}/aap/eda'
+      - '{{ ansible_user_dir }}/aap/tls'
+    dest: '{{ ansible_user_dir }}/aap/backups/eda.tar.gz'
+    mode: '0640'
+
+- name: Download the automation eda tarball
+  ansible.builtin.fetch:
+    src: '{{ ansible_user_dir }}/aap/backups/eda.tar.gz'
+    dest: '{{ hostvars["localhost"]["_backup_dir"] }}/eda_{{ inventory_hostname }}.tar.gz'
+    flat: true
+...

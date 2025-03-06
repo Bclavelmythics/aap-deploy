@@ -1,0 +1,1 @@
+podman run --rm --net=host -e PGPASSWORD {{ _postgresql_socket | default('') }} {{ _postgresql_image }} psql "$@"

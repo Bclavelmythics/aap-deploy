@@ -1,0 +1,142 @@
+---
+- name: Ensure remote user is non root
+  ansible.builtin.assert:
+    that:
+      - ansible_user_uid != 0
+    fail_msg: 'the remote user should be a non root user'
+
+- name: Ensure remote nodes use supported distribution
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution == 'RedHat'
+      - ansible_distribution_version is version_compare('9.2', '>=')
+    fail_msg: 'Only Red Hat Enterprise Linux 9.2+ distributions are supported'
+
+- name: Check CA TLS configuration
+  ansible.builtin.include_tasks:
+    file: tls.yml
+  vars:
+    _tls_cert: '{{ ca_tls_cert }}'
+    _tls_key: '{{ ca_tls_key }}'
+    _tls_key_passphrase: '{{ ca_tls_key_passphrase }}'
+    _tls_remote: '{{ ca_tls_remote }}'
+
+- name: Check automation controller TLS configuration
+  ansible.builtin.include_tasks:
+    file: tls.yml
+  vars:
+    _tls_cert: '{{ controller_tls_cert }}'
+    _tls_key: '{{ controller_tls_key }}'
+    _tls_remote: '{{ controller_tls_remote }}'
+  when: inventory_hostname in groups.get('automationcontroller', [])
+
+- name: Check automation hub TLS configuration
+  ansible.builtin.include_tasks:
+    file: tls.yml
+  vars:
+    _tls_cert: '{{ hub_tls_cert }}'
+    _tls_key: '{{ hub_tls_key }}'
+    _tls_remote: '{{ hub_tls_remote }}'
+  when: inventory_hostname in groups.get('automationhub', [])
+
+- name: Check automation eda TLS configuration
+  when: inventory_hostname in groups.get('automationeda', [])
+  block:
+    - name: Check automation eda TLS configuration
+      ansible.builtin.include_tasks:
+        file: tls.yml
+      vars:
+        _tls_cert: '{{ eda_tls_cert }}'
+        _tls_key: '{{ eda_tls_key }}'
+        _tls_remote: '{{ eda_tls_remote }}'
+
+    - name: Check automation eda redis TLS configuration
+      ansible.builtin.include_tasks:
+        file: tls.yml
+      vars:
+        _tls_cert: '{{ eda_redis_tls_cert }}'
+        _tls_key: '{{ eda_redis_tls_key }}'
+        _tls_remote: '{{ eda_tls_remote }}'
+
+- name: Check automation gateway TLS configuration
+  when: inventory_hostname in groups.get('automationgateway', [])
+  block:
+    - name: Check automation gateway TLS configuration
+      ansible.builtin.include_tasks:
+        file: tls.yml
+      vars:
+        _tls_cert: '{{ gateway_tls_cert }}'
+        _tls_key: '{{ gateway_tls_key }}'
+        _tls_remote: '{{ gateway_tls_remote }}'
+
+    - name: Check automation gateway redis TLS configuration
+      ansible.builtin.include_tasks:
+        file: tls.yml
+      vars:
+        _tls_cert: '{{ gateway_redis_tls_cert }}'
+        _tls_key: '{{ gateway_redis_tls_key }}'
+        _tls_remote: '{{ gateway_tls_remote }}'
+
+- name: Check redis TLS configuration
+  ansible.builtin.include_tasks:
+    file: tls.yml
+  vars:
+    _tls_cert: '{{ redis_tls_cert }}'
+    _tls_key: '{{ redis_tls_key }}'
+    _tls_remote: '{{ redis_tls_remote }}'
+  when: >
+    inventory_hostname in groups.get('redis', []) or
+    inventory_hostname == groups['automationgateway'] | first
+
+- name: Check postgresql TLS configuration
+  ansible.builtin.include_tasks:
+    file: tls.yml
+  vars:
+    _tls_cert: '{{ postgresql_tls_cert }}'
+    _tls_key: '{{ postgresql_tls_key }}'
+    _tls_remote: '{{ postgresql_tls_remote }}'
+  when: inventory_hostname in groups.get('database', [])
+
+- name: Specific receptor TLS checks
+  when: >
+    inventory_hostname in groups.get('automationcontroller', []) or
+    inventory_hostname in groups.get('execution_nodes', [])
+  block:
+    - name: Check receptor TLS configuration
+      ansible.builtin.include_tasks:
+        file: tls.yml
+      vars:
+        _tls_cert: '{{ receptor_tls_cert }}'
+        _tls_key: '{{ receptor_tls_key }}'
+        _tls_remote: '{{ receptor_tls_remote }}'
+
+    - name: Ensure receptor TLS certificate uses SAN extension with OID
+      ansible.builtin.assert:
+        that:
+          - _receptor_cert_info.subject_alt_name is defined
+          - _receptor_cert_info.subject_alt_name | select('match', '^otherName:1.3.6.1.4.1.2312.19.1') | length > 0
+        fail_msg: 'Receptor x509 TLS certificate requires SAN extension with OID (1.3.6.1.4.1.2312.19.1) in otherName field.'
+      vars:
+        _receptor_cert_info: '{{ lookup("file", receptor_tls_cert) | community.crypto.x509_certificate_info }}'
+      when:
+        - receptor_tls_cert is defined
+        - not receptor_tls_remote | default(false) | bool
+
+    - name: Get receptor x509 TLS certificate information
+      community.crypto.x509_certificate_info:
+        path: '{{ receptor_tls_cert }}'
+      register: _receptor_cert_info
+      when:
+        - receptor_tls_cert is defined
+        - receptor_tls_remote | default(false) | bool
+
+    - name: Ensure receptor TLS certificate uses SAN extension with OID
+      ansible.builtin.assert:
+        that:
+          - _receptor_cert_info.subject_alt_name is defined
+          - _receptor_cert_info.subject_alt_name | select('match', '^otherName:1.3.6.1.4.1.2312.19.1') | length > 0
+        fail_msg: 'Receptor x509 TLS certificate requires SAN extension with OID (1.3.6.1.4.1.2312.19.1) in otherName field.'
+      when:
+        - receptor_tls_cert is defined
+        - receptor_tls_remote | default(false) | bool
+...

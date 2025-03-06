@@ -1,0 +1,81 @@
+---
+- name: Set automation gateway facts
+  ansible.builtin.include_tasks: facts.yml
+
+- name: Stop automation gateway systemd services
+  ansible.builtin.include_tasks: systemd.yml
+  vars:
+    __systemd_state: stopped
+
+- name: Unarchive the automation gateway data
+  ansible.builtin.unarchive:
+    src: '{{ hostvars["localhost"]["_backup_dir"] }}/gateway_{{ inventory_hostname }}.tar.gz'
+    dest: '{{ ansible_user_dir }}'
+
+- name: Override redis database and host when using cluster
+  ansible.builtin.set_fact:
+    _redis_cluster_db: 0
+    _redis_cluster_host: '{{ hostvars[groups["redis"][0]]["_redis_hostname"] }}'
+  when: redis_mode | default('cluster') == 'cluster'
+
+- name: Invalid redis cache
+  ansible.builtin.include_role:
+    name: redis
+    tasks_from: flush.yml
+  vars:
+    __redis_databases:
+      - '{{ _redis_cluster_db | default(gateway_redis_cache_db) }}'
+    __redis_host: '{{ _redis_cluster_host | default(hostvars[groups["automationgateway"][0]]["_gateway_redis_hostname"]) }}'
+    __redis_port: '{{ gateway_redis_port }}'
+    __redis_cert: '{{ gateway_conf_dir }}/redis.cert'
+    __redis_key: '{{ gateway_conf_dir }}/redis.key'
+    redis_unix_socket: false
+    redis_disable_tls: '{{ gateway_redis_disable_tls }}'
+
+- name: Reconfigure containers
+  ansible.builtin.include_tasks: containers.yml
+  vars:
+    __containers_recreate: true
+
+- name: Grant createdb role to the automation gateway postgresql user
+  community.postgresql.postgresql_user:
+    name: '{{ gateway_pg_username }}'
+    role_attr_flags: CREATEDB
+    login_host: '{{ gateway_pg_host }}'
+    login_port: '{{ gateway_pg_port }}'
+    login_user: '{{ postgresql_admin_username | default("postgres") }}'
+    login_password: '{{ postgresql_admin_password | default(omit) }}'
+    login_db: '{{ postgresql_admin_database | default("postgres") }}'
+    login_unix_socket: '{{ gateway_pg_socket | default(omit) }}'
+  run_once: true
+
+- name: Restore the automation gateway postgresql database
+  community.postgresql.postgresql_db:
+    name: template1
+    login_host: '{{ gateway_pg_host }}'
+    login_port: '{{ gateway_pg_port }}'
+    login_user: '{{ gateway_pg_username }}'
+    login_password: '{{ gateway_pg_password }}'
+    login_unix_socket: '{{ gateway_pg_socket | default(omit) }}'
+    target: '{{ ansible_user_dir }}/aap/backups/{{ gateway_pg_database }}.pgc'
+    target_opts: '--create --clean --if-exists'
+    state: restore
+  run_once: true
+
+- name: Revoke createdb role to the automation gateway postgresql user
+  community.postgresql.postgresql_user:
+    name: '{{ gateway_pg_username }}'
+    role_attr_flags: NOCREATEDB
+    login_host: '{{ gateway_pg_host }}'
+    login_port: '{{ gateway_pg_port }}'
+    login_user: '{{ postgresql_admin_username | default("postgres") }}'
+    login_password: '{{ postgresql_admin_password | default(omit) }}'
+    login_db: '{{ postgresql_admin_database | default("postgres") }}'
+    login_unix_socket: '{{ gateway_pg_socket | default(omit) }}'
+  run_once: true
+
+- name: Start automation gateway systemd services
+  ansible.builtin.include_tasks: systemd.yml
+  vars:
+    __systemd_state: started
+...

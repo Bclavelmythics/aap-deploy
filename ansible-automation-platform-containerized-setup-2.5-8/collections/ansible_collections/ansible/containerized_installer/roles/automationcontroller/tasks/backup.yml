@@ -1,0 +1,55 @@
+---
+- name: Precreate automation controller database partitions
+  containers.podman.podman_container:
+    name: automation-controller-backup
+    image: '{{ _controller_image }}'
+    command: 'awx-manage precreate_partitions --count={{ controller_precreate_partition_hours }}'
+    detach: false
+    rm: true
+    log_driver: '{{ container_log_driver }}'
+    user: '{{ ansible_user_uid }}'
+    userns: keep-id
+    network: host
+    secrets:
+      - 'controller_secret_key,target=/etc/tower/SECRET_KEY,mode=0400,uid={{ ansible_user_uid }}'
+      - 'controller_postgres,target=/etc/tower/conf.d/postgres.py,mode=0400,uid={{ ansible_user_uid }}'
+    volume:
+      - '{{ controller_conf_dir }}/settings.py:/etc/tower/settings.py:ro,z'
+  register: _precreate_partition
+  changed_when: "'Created partitions for' in _precreate_partition.stdout"
+  run_once: true
+  retries: 5
+  delay: 60
+  until: _precreate_partition is not failed
+
+- name: Backup the automation controller postgresql database
+  community.postgresql.postgresql_db:
+    name: '{{ controller_pg_database }}'
+    login_host: '{{ controller_pg_host }}'
+    login_port: '{{ controller_pg_port }}'
+    login_user: '{{ controller_pg_username }}'
+    login_password: '{{ controller_pg_password }}'
+    login_unix_socket: '{{ controller_pg_socket | default(omit) }}'
+    target: '{{ ansible_user_dir }}/aap/backups/{{ controller_pg_database }}.pgc'
+    target_opts: '--clean --create'
+    state: dump
+  run_once: true
+
+- name: Archive the automation controller data
+  ansible.containerized_installer.archive:
+    path:
+      - '{{ ansible_user_dir }}/.local/share/containers/storage/secrets'
+      - '{{ ansible_user_dir }}/aap/backups/{{ controller_pg_database }}.pgc'
+      - '{{ ansible_user_dir }}/aap/controller/data/projects'
+      - '{{ ansible_user_dir }}/aap/controller/etc'
+      - '{{ ansible_user_dir }}/aap/controller/nginx'
+      - '{{ ansible_user_dir }}/aap/tls'
+    dest: '{{ ansible_user_dir }}/aap/backups/controller.tar.gz'
+    mode: '0640'
+
+- name: Download the automation controller tarball
+  ansible.builtin.fetch:
+    src: '{{ ansible_user_dir }}/aap/backups/controller.tar.gz'
+    dest: '{{ hostvars["localhost"]["_backup_dir"] }}/controller_{{ inventory_hostname }}.tar.gz'
+    flat: true
+...
