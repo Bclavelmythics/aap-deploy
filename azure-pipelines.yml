@@ -18,7 +18,7 @@ steps:
   displayName: 'Download secure file'
   inputs:
     secureFile: brodyclavell
-  outputs:
+  output:
     secureFilePath: brodyclavell
 - script: |
     chmod 400 $(brodyclavell.secureFilePath)
