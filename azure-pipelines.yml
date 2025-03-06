@@ -7,8 +7,21 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: Demo
 
 steps:
+- script: |
+    sudo dnf install git -y
+    sudo dnf install ansible-core -y
+  displayName: 'Install packages needed for AAP installation'
 - checkout: self
+- script: printenv | sort
+  displayName: "List All Environment Variables"
+- script: |     
+    echo "$(ANSIBLE_VAULT_PASSWORD)" > $(BUILD_REPOSITORY_LOCALPATH)/.ansible-vault-password     
+    chmod 600 ~/.ansible-vault-password
+  displayName: 'Create Ansible Vault Password File'
+  env:
+    ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
+ 
 
