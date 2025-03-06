@@ -11,31 +11,30 @@
 # This section is for your AAP Gateway host(s)
 # -----------------------------------------------------
 [automationgateway]
-aap-01.mythics.lab
+aap-01.mythics.lab ansible_ssh_private_key_file=~/.ssh/ssh_key ansible_user=bclavel
 
 # This section is for your AAP Controller host(s)
 # -----------------------------------------------------
 [automationcontroller]
-aap-01.mythics.lab
+aap-01.mythics.lab ansible_ssh_private_key_file=~/.ssh/ssh_key ansible_user=bclavel
 
 # This section is for your AAP Automation Hub host(s)
 # -----------------------------------------------------
 [automationhub]
-aap-01.mythics.lab
+ansible_ssh_private_key_file=~/.ssh/ssh_key ansible_user=bclavel
 
 # This section is for your AAP EDA Controller host(s)
 # -----------------------------------------------------
 [automationeda]
-aap-01.mythics.lab
+ansible_ssh_private_key_file=~/.ssh/ssh_key ansible_user=bclavel
 
 # This section is for the AAP database
 # -----------------------------------------------------
 [database]
-aap-01.mythics.lab
+ansible_ssh_private_key_file=~/.ssh/ssh_key ansible_user=bclavel
 
 [all:vars]
-# Ansible
-ansible_connection=local
+
 
 # Common variables
 # https://docs.redhat.com/en/documentation/red_hat_ansible_automation_platform/2.5/html/containerized_installation/appendix-inventory-files-vars#ref-general-inventory-variables
