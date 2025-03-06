@@ -25,7 +25,8 @@ steps:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
     BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
 - script: |
-    sudo cd "$(BUILD_REPOSITORY_LOCALPATH)/ansible-automation-platform-containerized-setup-2.5-8"
+    sudo cd ${BUILD_REPOSITORY_LOCALPATH}/ansible-automation-platform-containerized-setup-2.5-8
+    ansible-playbook -i inventory-growth ansible.containerized_installer.install  -e "@foo.yml" --vault-password-file .ansible-vault-password
   env:
     BUILD_REPOSITORY_LOCALPATH: $(BUILD_REPOSITORY_LOCALPATH)
 
