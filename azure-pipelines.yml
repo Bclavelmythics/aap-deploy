@@ -16,7 +16,7 @@ steps:
 - script: |     
     echo "$(ANSIBLE_VAULT_PASSWORD)" > ~/.ansible-vault-password     
     chmod 600 ~/.ansible-vault-password
-  displayName:'Create Ansible Vault Password File'
+  displayName: 'Create Ansible Vault Password File'
   env:
     ANSIBLE_VAULT_PASSWORD: $(ANSIBLE_VAULT_PASSWORD)
  
